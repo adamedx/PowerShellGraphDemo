@@ -19,7 +19,7 @@ This will create a directory named `PowerShellGraphDemo` inside the current work
 To use the sample, you'll need to load it in PowerShell. From the root of the cloned repository directory, run the command below
 
 ```powershell
-. .\PowerShellGraphDemo.ps1` to load the sample cmdlets.
+. .\PowerShellGraphDemo.ps1 # to load the sample cmdlets.
 ```
 
 After you've run this once in a PowerShell session, you won't need to run it again, you can use the following two commands from the sample:
