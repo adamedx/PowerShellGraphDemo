@@ -73,10 +73,13 @@ function GetAuthCodeUri($appId, $redirectUri, $resourceUri, $graphScopes, $logon
     $nonce = GetNonce
     $scopesEscaped = GetScopeParameter $resourceUri $graphScopes $true
 
-    $queryTemplate='client_id={0}&response_type={1}&redirect_uri={2}&response_mode={3}&scope={4}&state={5}&nonce={6}'
+    $queryTemplate='client_id={0}&response_type={1}&redirect_uri={2}&response_mode={3}&scope={4}&state={5}&nonce={6}&prompt=login'
     $queryString = $queryTemplate -f $clientIdEscaped, $responseType, $redirectUriEscaped, $responseMode, $scopesEscaped, $state, $nonce
 
-    [Uri] ($loginUri, $queryString -join '?')
+    @{
+        Uri = [Uri] ($loginUri, $queryString -join '?')
+        RequestedState = $state
+    }
 }
 
 function GetTokenRequestBody($appId, $redirectUri, $resourceUri, $graphScopes, $authCode) {
@@ -142,15 +145,10 @@ function GetAuthCodeInfo($authUri) {
     }
 
     if ( $authError ) {
-        throw ("Auth error: {0}: '{2}' - {1}" -f $authError, $errorDescription, $resultUri)
-    }
-
-    $authCode = if ( $resultUri.fragment -match '(?<codekey>code=)(?<authcode>[^&]*)' ) {
-        $matches.authcode
+        write-error ("Auth error: {0}: '{2}' - {1}" -f $authError, $errorDescription, $resultUri)
     }
 
     @{
-        AuthCode = $authCode
         ResponseUri = $resultUri
         ResponseParameters = $queryResponseParameters
     }
@@ -163,7 +161,13 @@ function GetGraphAccessToken {
     $erroractionpreference = 'stop'
 
     $authCodeUri = GetAuthCodeUri $appId $redirectUri $graphUri $graphScopes $logonEndpoint
-    $authCodeInfo = GetAuthCodeInfo $authCodeUri
+    $authCodeInfo = GetAuthCodeInfo $authCodeUri.Uri
+
+    if ( $authCodeUri.RequestedState -ne $authCodeInfo.ResponseParameters.State ) {
+        write-error ("State value '{0}' was specified in the auth code request, but the response returned a different state value of '{1}'" -f $authCodeUri.RequestedState, $authCodeInfo.State)
+    } else {
+        write-verbose ("Requested state value '{0}' matches the state value '{1}' returned in the response parameters; the response is valid." -f $authCodeUri.RequestedState, $authCodeInfo.ResponseParameters.State)
+    }
 
     if ( $verbosepreference -ne 'silentlycontinue' ) {
         write-verbose 'Successfully retrieved authorization information'
@@ -172,9 +176,10 @@ function GetGraphAccessToken {
             write-verbose "`t$($_): $($authCodeInfo.responseparameters[$_])"
         }
     }
+
     $tokenUri = GetTokenUri $logonEndpoint
 
-    $tokenRequestBody = GetTokenRequestBody $appId $redirectUri $graphUri $graphScopes $authCodeInfo.authCode
+    $tokenRequestBody = GetTokenRequestBody $appId $redirectUri $graphUri $graphScopes $authCodeInfo.ResponseParameters.Code
     $tokenResponse = invoke-webrequest -method POST -usebasicparsing -uri $tokenUri -body $tokenRequestBody -headers @{'Content-Type'='application/x-www-form-urlencoded'} -erroraction stop
 
     write-verbose "Token: $($tokenResponse.content)"
