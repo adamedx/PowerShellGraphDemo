@@ -191,21 +191,52 @@ function GetGraphAccessToken {
 }
 
 function InvokeGraphRequest {
-    [cmdletbinding()]
-    param( $graphBaseUri, $graphRelativeUri, $graphAccessToken, $graphMethod = 'GET', $body, $headers )
+    [cmdletbinding(positionalbinding=$false, defaultparametersetname='accessinfo')]
+    param(
+        [parameter(parametersetname='accessinfo', position=0, mandatory=$true)]
+        $graphAccessInfo,
+
+        [parameter(parametersetname='explicit', position=0)]
+        $graphBaseUri = 'https://graph.microsoft.com',
+
+        [parameter(position=1)]
+        $graphRelativeUri = 'me',
+
+        [parameter(parametersetname='explicit')]
+        $graphVersion = 'v1.0',
+
+        [parameter(parametersetname='explicit', mandatory=$true)]
+        $graphAccessToken,
+
+        $graphMethod = 'GET',
+
+        $body,
+
+        $extraHeaders
+    )
 
     $erroractionpreference = 'stop'
 
-    $graphUri = $graphBaseUri.trimend('/'), $graphRelativeUri -join '/'
+    $accessToken = $null
+    $baseUri = if ( $graphAccessInfo ) {
+        $accessToken = $graphAccessInfo.token.access_token
+        $graphAccessInfo.graphUri
+    } else {
+        $accessToken = $graphAccessToken
+        $graphBaseUri
+    }
+
+    $graphUri = $baseUri.trimend('/'), $graphVersion, $graphRelativeUri -join '/'
+
 
     $requestHeaders = @{
         'Content-Type' = 'application/json'
-        Authorization  = $graphAccessToken.access_token
+        Authorization  = $accessToken
     }
 
-    if ( $headers ) {
-        $headers.keys | foreach {
-            $requestHeaders[$_] = $headers[$_]
+    if ( $extraHeaders ) {
+        $extraHeaders.keys | foreach {
+            $requestHeaders[$_] = $extraHeaders[$_]
         }
     }
 
@@ -229,6 +260,6 @@ function InvokeGraphRequest {
 
 # Here is an example usage below:
 # $accessInfo = GetGraphAccessToken # -verbose # This will get you an access token and the location of a Graph endpoint
-# $result = InvokeGraphRequest $accessInfo.GraphUri v1.0/me $accessInfo.token # -verbose # This makes a Graph call on that endpoint with the access token
+# $result = InvokeGraphRequest $accessInfo me # -verbose # This makes a Graph call on that endpoint with the access token
 # $result.content # Conveniently access the JSON content as deserialized PowerShell objects
 
