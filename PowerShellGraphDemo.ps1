@@ -259,7 +259,7 @@ function InvokeGraphRequest {
 }
 
 # Here is an example usage below:
-# $accessInfo = GetGraphAccessToken # -verbose # This will get you an access token and the location of a Graph endpoint
-# $result = InvokeGraphRequest $accessInfo me # -verbose # This makes a Graph call on that endpoint with the access token
+# $accessInfo = GetGraphAccessToken # -verbose # This will get you an access token
+# $result = InvokeGraphRequest $accessInfo me # -verbose # This makes a Graph call with the access token
 # $result.content # Conveniently access the JSON content as deserialized PowerShell objects
 
