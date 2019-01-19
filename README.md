@@ -16,7 +16,7 @@ This will create a directory named `PowerShellGraphDemo` inside the current work
 
 ## Usage
 
-To exercise the two samples, you'll need to load them in PowerShell. From the root of the cloned repository directory, run the commands below -- the second is only needed if you want to learn about using [Microsoft Autentication Library (MSAL)](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) in PowerShell, though this is the recommended approach for obtaining Graph access tokens:
+To exercise the two samples, you'll need to load them in PowerShell. From the root of the cloned repository directory, run the commands below -- the second is only needed if you want to learn about using [Microsoft Authentication Library (MSAL)](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) in PowerShell, though this is the recommended approach for obtaining Graph access tokens:
 
 ```powershell
 . ./PowerShellGraphDemo.ps1 # For PowerShell script-only access to Graph
@@ -53,7 +53,7 @@ To see more details about the URI's access during authentication and Graph acces
 
 ### Sample 2: Get a token in PowerShell via MSAL
 
-This builds on the sample above but replaces `GetGraphAccessToken` with usage of [Microsoft Autentication Library (MSAL)](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) for .NET; this removes the need for the majority of the code in [PowerShellGraphDemo.ps1](PowerShellGraphDemo.ps1) which was involved in implementing the OAuth2 protocol and obtaining the token. All that's needed from [PowerShellGraphDemo.ps1](PowerShellGraphDemo.ps1) is the function `InvokeGraphRequest` which is really just a lightweight wrapper on top of PowerShell's built-in `Invoke-WebRequest` cmdlet.
+This builds on the sample above but replaces `GetGraphAccessToken` with usage of [Microsoft Authentication Library (MSAL)](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet) for .NET; this removes the need for the majority of the code in [PowerShellGraphDemo.ps1](PowerShellGraphDemo.ps1) which was involved in implementing the OAuth2 protocol and obtaining the token. All that's needed from [PowerShellGraphDemo.ps1](PowerShellGraphDemo.ps1) is the function `InvokeGraphRequest` which is really just a lightweight wrapper on top of PowerShell's built-in `Invoke-WebRequest` cmdlet.
 
 MSAL is an actively developed and maintained project with support for authentication features well beyond what is demonstrated here and should be considered the preferred approach for PowerShell or any .NET-based platform to perform authentication. Remember: PowerShell can access any .NET code just as if it were built-in to PowerShell because PowerShell itself is built on .NET.
 
