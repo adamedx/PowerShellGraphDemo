@@ -1,6 +1,6 @@
 # Microsoft Graph via PowerShell Example
 
-This repository demonstrates accessing the Microsoft Graph through PowerShell. The samples include scripts that obtain an access token for Microsoft Graph through the native (public) client authentication flow, make a call to the Graph, and deserialize the result.
+This repository demonstrates accessing the [Microsoft Graph](https://graph.microsoft.io) through PowerShell. The samples include scripts that obtain an access token for Microsoft Graph through the native (public) client authentication flow, make a call to the Graph, and deserialize the result.
 
 The code here is a demonstration of the techniques required to use Microsoft Graph from PowerShell. A robust and feature-filled implementation of Graph via PowerShell can be found in the [AutoGraphPS](https://github.com/adamedx/autographps) project, which provides capabilities well beyond those in this demo repository.
 
@@ -27,7 +27,7 @@ The first command contains code that shows the protocol down to the REST API lev
 
 After you've run these once in a PowerShell session, you won't need to run them again.
 
-Note that while the commands have default parameters that allow for simple execution in the examples below, they also take parameters so you can try out a wide range of Graph scenarios. Experiment with the parameters to obtain tokens with different permissions and access arbitrary parts of the graph.
+Note that while the commands have default parameters that allow for simple execution in the examples below, they also take parameters so you can try out a wide range of Graph scenarios. Experiment with the parameters to obtain tokens with different [permissions](https://developer.microsoft.com/en-us/graph/docs/concepts/permissions_reference) and access arbitrary [parts of the Graph](https://docs.microsoft.com/en-us/graph/api/overview?toc=./ref/toc.json&view=graph-rest-1.0).
 
 ### Sample 1: PowerShell-only example with explicit OAuth2 protocol
 
@@ -51,6 +51,8 @@ The first line displays the login UX, and retrieves the accesss token and the MS
 
 By default, the URI accessed by `InvokeGraphRequest` would be `https://graph.microsoft.com/v1.0/me` which is an Azure Public cloud URI for Graph. `GetGraphAccessToken` allows the caller to override the logon endpoint and MS Graph endpoint so that clouds other than the Public cloud (e.g. the Germany cloud) may be used.
 
+The example above accesses `me`, but any URI relative to the root of a graph version (e.g. 'https://graph.microsoft.com/v1.0') may be used, such as `me/contacts`, `organization`, `users/{userid}`, `me/drive/root`, etc. See the [Graph API documentation](https://docs.microsoft.com/en-us/graph/api/overview?toc=./ref/toc.json&view=graph-rest-1.0) to learn more about valid URI's.
+
 To see more details about the URI's accessed during authentication and Graph access, specify the `-verbose` option for either command.
 
 ### Sample 2: Get a token in PowerShell via MSAL
@@ -67,7 +69,7 @@ $result = InvokeGraphRequest me -GraphAccessToken $accessToken
 $result.content
 ```
 
-Note that a key difference between the MSAL approach and the explicit OAuth2 example is that MSAL infers the Graph endpoint, https://graph.microsoft.com, from the permission scopes we supply (in the default case the sample specifies the scope `User.Read`). This is due to the fact that scopes like `User.Read` or `Directory.AccessAsUser.All` that are not specified as a URI are interpreted by the sample's default login endpoint https://login.microsoftonline.com/common/OAuth2 to mean an OAuth2 scope of `https://graph.microsoft.com/User.Read` and `https://graph.microsoft.com/Directory.AccessAsUser.all`. Thus one only needs to specify scopes as named in the Graph Permissions documentation in the call to MSAL's [PublicClientApplication class](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identity.client.publicclientapplication?view=azure-dotnet)'s [AcquireTokenAsync](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identity.client.publicclientapplication.acquiretokenasync?view=azure-dotnet) which takes in only `scopes` as a paremter to obtain a token for https://graph.microsoft.com. This is a special feature of the login endpoint to provide a simplified developer experience for Microsoft Graph.
+Note that a key difference between the MSAL approach and the explicit OAuth2 example is that MSAL infers the Graph endpoint, https://graph.microsoft.com, from the permission scopes we supply (in the default case the sample specifies the scope `User.Read`). This is due to the fact that scopes like `User.Read` or `Directory.AccessAsUser.All` that are not specified as a URI are interpreted by the sample's default login endpoint https://login.microsoftonline.com/common/OAuth2 to mean an OAuth2 scope of `https://graph.microsoft.com/User.Read` and `https://graph.microsoft.com/Directory.AccessAsUser.all`. Thus one only needs to specify scopes as named in the [Graph Permissions documentation](https://developer.microsoft.com/en-us/graph/docs/concepts/permissions_reference) in the call to MSAL's [PublicClientApplication class](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identity.client.publicclientapplication?view=azure-dotnet)'s [AcquireTokenAsync](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identity.client.publicclientapplication.acquiretokenasync?view=azure-dotnet) which takes in only `scopes` as a paremter to obtain a token for https://graph.microsoft.com. This is a special feature of the login endpoint to provide a simplified developer experience for Microsoft Graph.
 
 Because the `InvokeGraphRequest` function here is not itself aware of this logic, we explicitly pass in the `GraphBaseUri` parameter -- for convenience it defaults to https://graph.microsoft.com, but if you were accessing Graph in a different cloud (e.g. https://graph.microsoft.de) you'd need to override it. For the pure PowerShell case, we implemented a more flexible `GetGraphAccessToken` function that could obtain tokens for arbitrary resources and not just Graph as a way of more generically demonstrating the OAuth2 protocol. So that function returned a structure indicating the resource for which the token was obtained, and was passed that along to `InokeGraphRequest` rather than hard-coding https://graph.microsoft.com as we did in this MSAL case.
 
