@@ -59,7 +59,7 @@ The next sample builds on the sample above but replaces `GetGraphAccessToken` wi
 
 MSAL is an actively developed and maintained project with support for authentication features well beyond what is demonstrated here and should be considered the preferred approach for PowerShell or any .NET-based platform to perform authentication. Remember: PowerShell can access any .NET code just as if it were built-in to PowerShell because PowerShell itself is built on .NET.
 
-To call Graph in this way, use `Get-GraphTokenFromMSAL` from the `Get-GraphTokenFromMSAL.ps1` script, and again `InvokeGraphRequest` from `PowerShellDemo.ps1`, both of which should be dot-sourced in your PowerShell session as described earlier:
+To call Graph in this way, use `Get-GraphAccessTokenFromMSAL` from the [Get-GraphAccessTokenFromMSAL.ps1](Get-GraphAccessTokenFromMSAL.ps1) script, and again `InvokeGraphRequest` from `PowerShellDemo.ps1`, both of which should be dot-sourced in your PowerShell session as described earlier:
 
 ```powershell
 $accessToken = Get-GraphAccessTokenFromMSAL
