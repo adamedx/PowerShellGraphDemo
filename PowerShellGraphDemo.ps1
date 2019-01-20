@@ -68,7 +68,7 @@ function GetAuthCodeUri($appId, $redirectUri, $resourceUri, $graphScopes, $logon
     $clientIdEscaped = [System.Net.WebUtility]::UrlEncode($appId)
     $responseType = 'code'
     $redirectUriEscaped = [System.Net.WebUtility]::UrlEncode($redirectUri)
-    $responseMode = 'fragment'
+    $responseMode = 'query'
     $state = [System.Net.WebUtility]::UrlEncode((new-guid | select -expandproperty guid))
     $nonce = GetNonce
     $scopesEscaped = GetScopeParameter $resourceUri $graphScopes $true
@@ -123,21 +123,18 @@ function GetAuthCodeInfo($authUri) {
     $form.Add_Shown({$form.Activate()})
     $form.ShowDialog() | out-null
 
-    # We used 'fragment' for the response type, so strip off
-    # the leading '#' character
-    $decodedUri = ([System.Net.WebUtility]::UrlDecode($resultUri.fragment) -split '#')[1]
+    # The response mode for this uri is 'query', so we parse the query parameters
+    # to get the result
+    $queryParameters = [System.Web.HttpUtility]::ParseQueryString($resultUri.query)
 
     $queryResponseParameters = @{}
 
-    ($decodedUri -split '&') | foreach {
-        $pair = $_ -split '='
-
-        $key = $pair[0]
-        $value = $pair[1]
+    $queryParameters.keys | foreach {
+        $key = $_
+        $value = $queryParameters.Get($_)
 
         $queryResponseParameters[$key] = $value
     }
-
 
     $errorDescription = if ( $queryResponseParameters['error'] ) {
         $authError = $queryResponseParameters['error']
@@ -145,7 +142,7 @@ function GetAuthCodeInfo($authUri) {
     }
 
     if ( $authError ) {
-        write-error ("Auth error: {0}: '{2}' - {1}" -f $authError, $errorDescription, $resultUri)
+        throw ("Error obtaining authorization code: {0}: '{2}' - {1}" -f $authError, $errorDescription, $resultUri)
     }
 
     @{
@@ -186,48 +183,46 @@ function GetGraphAccessToken {
 
     [PSCustomObject] @{
         GraphUri = $graphUri
-        Token = $tokenResponse.content | convertfrom-json
+        AccessToken = ($tokenResponse.content | convertfrom-json).access_token
     }
 }
 
 function InvokeGraphRequest {
     [cmdletbinding(positionalbinding=$false, defaultparametersetname='accessinfo')]
     param(
-        [parameter(parametersetname='accessinfo', position=0, mandatory=$true)]
-        $graphAccessInfo,
+        [parameter(position=0, mandatory=$true)]
+        $GraphRelativeUri = 'me',
 
-        [parameter(parametersetname='explicit', position=0)]
-        $graphBaseUri = 'https://graph.microsoft.com',
-
-        [parameter(position=1)]
-        $graphRelativeUri = 'me',
-
-        [parameter(parametersetname='explicit')]
-        $graphVersion = 'v1.0',
+        [parameter(parametersetname='accessinfo', position=1, mandatory=$true)]
+        $GraphAccessInfo,
 
         [parameter(parametersetname='explicit', mandatory=$true)]
-        $graphAccessToken,
+        $GraphAccessToken,
 
-        $graphMethod = 'GET',
+        [parameter(parametersetname='explicit')]
+        $GraphBaseUri = 'https://graph.microsoft.com',
 
-        $body,
+        $GraphVersion = 'v1.0',
 
-        $extraHeaders
+        $GraphMethod = 'GET',
+
+        $Body,
+
+        $ExtraHeaders
     )
 
     $erroractionpreference = 'stop'
 
     $accessToken = $null
     $baseUri = if ( $graphAccessInfo ) {
-        $accessToken = $graphAccessInfo.token.access_token
+        $accessToken = $graphAccessInfo.AccessToken
         $graphAccessInfo.graphUri
     } else {
         $accessToken = $graphAccessToken
-        $graphBaseUri
+        $GraphBaseUri
     }
 
     $graphUri = $baseUri.trimend('/'), $graphVersion, $graphRelativeUri -join '/'
-
 
     $requestHeaders = @{
         'Content-Type' = 'application/json'
@@ -260,6 +255,6 @@ function InvokeGraphRequest {
 
 # Here is an example usage below:
 # $accessInfo = GetGraphAccessToken # -verbose # This will get you an access token
-# $result = InvokeGraphRequest $accessInfo me # -verbose # This makes a Graph call with the access token
+# $result = InvokeGraphRequest me $accessInfo # -verbose # This makes a Graph call with the access token
 # $result.content # Conveniently access the JSON content as deserialized PowerShell objects
 

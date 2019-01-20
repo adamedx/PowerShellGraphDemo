@@ -40,6 +40,6 @@ function Get-GraphAccessTokenFromMSAL {
     if ( $asyncResult.Status -eq 'Faulted' ) {
         write-error $asyncResult.Exception
     } else {
-        $token
+        $token.AccessToken
     }
 }

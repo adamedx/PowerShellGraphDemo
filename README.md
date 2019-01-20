@@ -27,6 +27,8 @@ The first command contains code that shows the protocol down to the REST API lev
 
 After you've run these once in a PowerShell session, you won't need to run them again.
 
+Note that while the commands have default parameters that allow for simple execution in the examples below, they also take parameters so you can try out a wide range of Graph scenarios. Experiment with the parameters to obtain tokens with different permissions and access arbitrary parts of the graph.
+
 ### Sample 1: PowerShell-only example with explicit OAuth2 protocol
 
 The functions below from [PowerShellGraphDemo.ps1](PowerShellGraphDemo.ps1) allow you to obtain an access token for Graph, and then use it to make a call to Graph:
@@ -40,8 +42,8 @@ The functions below from [PowerShellGraphDemo.ps1](PowerShellGraphDemo.ps1) allo
 The following example should work against any cloud -- it will sign the user in and retrieve an access token for that user in their cloud and then make a call to MS Graph to get the `me` singleton that returns profile information about that user:
 
 ```powershell
-$accessInfo = GetGraphAccessToken
-$result = InvokeGraphRequest $accessInfo.GraphUri v1.0/me $accessInfo.token
+$accessInfo = GetGraphAccessToken # This will present a logon page where you must sign in
+$result = InvokeGraphRequest me -GraphBaseUri $accessInfo.GraphUri -GraphAccessToken $accessInfo.AccessToken
 $result.content
 ```
 
@@ -61,13 +63,13 @@ To call Graph in this way, use `Get-GraphTokenFromMSAL` from the `Get-GraphToken
 
 ```powershell
 $accessToken = Get-GraphAccessTokenFromMSAL
-$result = InvokeGraphRequest https://graph.microsoft.com v1.0/me $accessToken
+$result = InvokeGraphRequest me -GraphAccessToken $accessToken
 $result.content
 ```
 
 Note that a key difference between the MSAL approach and the explicit OAuth2 example is that MSAL infers the Graph endpoint, https://graph.microsoft.com, from the permission scopes we supply (in the default case the sample specifies the scope 'User.Read'). This is due to the fact that scopes like `User.Read` or `Directory.AccessAsUser.All` that are not specified as a URI are interpreted by the sample's default login endpoint https://login.microsoftonline.com/common/OAuth2 to mean an OAuth2 scope of `https://graph.microsoft.com/User.Read` and `https://graph.microsoft.com/Directory.AccessAsUser.all`. Thus one only needs to specify scopes as named in the Graph Permissions documentation in the call to MSAL's [PublicClientApplication class](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identity.client.publicclientapplication?view=azure-dotnet)'s [AcquireTokenAsync](https://docs.microsoft.com/en-us/dotnet/api/microsoft.identity.client.publicclientapplication.acquiretokenasync?view=azure-dotnet) which takes in only `scopes` as a paremter to obtain a token for https://graph.microsoft.com. This is a special feature of the login endpoint to provide a simplified developer experience for Microsoft Graph.
 
-Because the `InvokeGraphRequest` function here is not itself aware of this logic, we explicitly pass in https://graph.microsoft.com to the function as the Graph endpoint. For the pure PowerShell case, we implemented a more flexible `GetGraphAccessToken` that could obtain tokens for arbitrary resources and not just Graph as a way of more generically demonstrating the OAuth2 protocol. So that function returned a structure indicating the resource for which the token was obtained, and was passed that along to `InokeGraphRequest` rather than hard-coding https://graph.microsoft.com as we did in this MSAL case.
+Because the `InvokeGraphRequest` function here is not itself aware of this logic, we explicitly pass in the `GraphBaseUri` parameter -- for convenience it defaults to https://graph.microsoft.com, but if you were accessing Graph in a different cloud (e.g. https://graph.microsoft.de) you'd need to override it. For the pure PowerShell case, we implemented a more flexible `GetGraphAccessToken` function that could obtain tokens for arbitrary resources and not just Graph as a way of more generically demonstrating the OAuth2 protocol. So that function returned a structure indicating the resource for which the token was obtained, and was passed that along to `InokeGraphRequest` rather than hard-coding https://graph.microsoft.com as we did in this MSAL case.
 
 ## Assumptions and limitations
 
