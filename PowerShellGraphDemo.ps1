@@ -101,6 +101,7 @@ function GetTokenUri($logonEndpoint) {
 
 function GetAuthCodeInfo($authUri) {
     add-type -AssemblyName System.Windows.Forms
+    add-type -AssemblyName System.Web
 
     $form = new-object -typename System.Windows.Forms.Form -property @{width=480;height=640}
     $browser = new-object -typeName System.Windows.Forms.WebBrowser -property @{width=440;height=640;url=$authUri }
